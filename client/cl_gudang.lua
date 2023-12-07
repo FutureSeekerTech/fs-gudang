@@ -1,12 +1,21 @@
-local QBCore = exports['qb-core']:GetCoreObject()
+ESX = exports['es_extended']:getSharedObject()
 local function OpenGudangWithPin(kode, pin, lokasi)
   local _sendData = {}
   _sendData.kode = kode
   _sendData.pin = pin
   _sendData.lokasi = lokasi
   local ownedData = lib.callback.await('gudang:checkOwnedPin', false, _sendData)
-  if not ownedData then QBCore.Functions.Notify('Kode Gudang Atau Pin Salah', 'error', 7500) return end
-  exports.ox_inventory:openInventory('stash', {id=ownedData.lokasi..'_'..ownedData.kode})
+  if ownedData then 
+      exports.ox_inventory:openInventory('stash', {id=ownedData.lokasi..'_'..ownedData.kode})
+  else
+    lib.notify({
+      title = 'Gagal',
+      description = 'Kode Gudang Atau Pin Salah',
+      type = 'error',
+      position = 'center-right'
+    }) return 
+  end
+    -- QBCore.Functions.Notify('Kode Gudang Atau Pin Salah', 'error', 7500) 
 end
 
 local function OpenGudangMenu(data)
@@ -34,6 +43,7 @@ local function OpenGudangMenu(data)
             onSelect = function()
               print("open gudang: "..ownedData.lokasi..'_'..ownedData.kode)
               exports.ox_inventory:openInventory('stash', {id=ownedData.lokasi..'_'..ownedData.kode})
+              TriggerServerEvent('gudang:simpanbarangdigudang', ownedData.lokasi..'_'..ownedData.kode)
             end,
         }
         menulist[#menulist+1] = {
@@ -49,7 +59,14 @@ local function OpenGudangMenu(data)
               datasend.kode = ownedData.kode
               datasend.pin = input[1]
               local response = lib.callback.await('gudang:updatePin', false, datasend)
-              if response then QBCore.Functions.Notify('Berhasil Merubah Pin', 'success', 7500) return end
+              if response then 
+                lib.notify({
+                  title = '',
+                  description = 'Berhasil Merubah Pin',
+                  type = 'infrom',
+                  position = 'center-right'
+              }) return end
+                -- QBCore.Functions.Notify('Berhasil Merubah Pin', 'success', 7500) return end
             end,
         }
     else
@@ -59,7 +76,14 @@ local function OpenGudangMenu(data)
             icon = 'fas fa-dollar',
             onSelect = function()
               local hasMoney = lib.callback.await('gudang:checkMoney', false)
-              if not hasMoney then QBCore.Functions.Notify('Tidak Memiliki Cukup Uang', 'error', 7500) return end
+              if not hasMoney then 
+                lib.notify({
+                  title = '',
+                  description = 'Tidak Memiliki Cukup Uang',
+                  type = 'infrom',
+                  position = 'center-right'
+              }) return end
+                -- QBCore.Functions.Notify('Tidak Memiliki Cukup Uang', 'error', 7500) return end
               local input = lib.inputDialog('Buat Pin Gudang', {
                 { type = 'input', label = 'pin', placeholder = 'pin', password = true },
               })
@@ -90,7 +114,7 @@ Citizen.CreateThread(function()
       BeginTextCommandSetBlipName("STRING")
       AddTextComponentString(data.label)
       EndTextCommandSetBlipName(blip)
-      exports["qb-target"]:AddCircleZone(data.hash, data.location, 1.0,{
+      exports["qtarget"]:AddCircleZone(data.hash, data.location, 2.5,{
           name = data.hash,
           debugPoly = false,
           useZ = true,
@@ -106,7 +130,7 @@ Citizen.CreateThread(function()
                   label = data.label,
               },
           },
-          distance = 1.5
+          distance = 2.5
       })
   end
 end)
