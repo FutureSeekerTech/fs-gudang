@@ -1,6 +1,6 @@
 Config = Config or {}
 Config.Gudang = {}
-Config.Gudang.Framework = "qbcore" -- "qbcore" or "esx"
+Config.Gudang.Framework = "esx" -- "qbcore" or "esx"
 Config.Gudang.price = 10000
 Config.Gudang.location = {
     ["kota"] = {
