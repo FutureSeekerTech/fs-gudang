@@ -1,4 +1,4 @@
-local QBCore = exports['qb-core']:GetCoreObject()
+ESX = exports['es_extended']:getSharedObject()
 local ListGudang = {}
 local ListGudangStatus = false
 
@@ -67,8 +67,8 @@ RegisterNetEvent('gudang:buyGudang', function(data)
     local src = source
     local pin = data.pin
     local lokasi = data.location
-    local Player = QBCore.Functions.GetPlayer(src)
-    local identifier = Player.PlayerData.citizenid
+    local xPlayer = ESX.GetPlayerFromId(src)
+    local identifier = xPlayer.identifier
     local kode = GudangCreateHash(6)
     MySQL.Async.fetchScalar('SELECT COUNT(*) FROM gudang WHERE lokasi = @lokasi and kode = @kode', {
         ['@lokasi'] = lokasi,
@@ -105,26 +105,47 @@ RegisterNetEvent('gudang:buyGudang', function(data)
                     }
                     print("registered gudang: "..stash.id)
                     exports.ox_inventory:RegisterStash(stash.id, stash.label, stash.slots, stash.weight, stash.owner)
-                    TriggerClientEvent('QBCore:Notify', src, 'Kamu telah membeli gudang dengan kode: '..kode)
-                    Player.Functions.RemoveMoney('cash', Config.Gudang.price, 'beli-gudang')
+                    TriggerClientEvent('ox_lib:notify', src, {
+                        title = '',
+                        description = 'Kamu telah membeli gudang dengan kode: '..kode,
+                        type = 'infrom',
+                        position = 'center-right'
+                    })
+                    -- TriggerClientEvent('QBCore:Notify', src, 'Kamu telah membeli gudang dengan kode: '..kode)
+                    xPlayer.removeAccountMoney('money', Config.Gudang.price, 'beli-gudang')
+                    -- xPlayer.Functions.RemoveMoney('cash', Config.Gudang.price, 'beli-gudang')
                 else
-                    TriggerClientEvent('QBCore:Notify', src, 'Gagal membeli gudang')
+                    TriggerClientEvent('ox_lib:notify', src, {
+                        title = '',
+                        description = 'Gagal membeli gudang',
+                        type = 'infrom',
+                        position = 'center-right'
+                    })
+                    -- TriggerClientEvent('QBCore:Notify', src, 'Gagal membeli gudang')
                 end
             end)
         else
-            TriggerClientEvent('QBCore:Notify', src, 'Gudang sudah ada yang memiliki')
+            TriggerClientEvent('ox_lib:notify', source, {
+                title = '',
+                description = 'Gudang sudah ada yang memiliki',
+                type = 'infrom',
+                position = 'center-right'
+            })
+            -- TriggerClientEvent('QBCore:Notify', src, 'Gudang sudah ada yang memiliki')
         end
     end)
 end)
 
 
 lib.callback.register('gudang:checkOwned', function(source, location)
-    local PlayerData = QBCore.Functions.GetPlayer(source).PlayerData
-    local identifier = PlayerData.citizenid
+    local xPlayer = ESX.GetPlayerFromId(source)
+    identifier = xPlayer.identifier
     local owned = nil
+    print('checking owned for identifier: '..identifier..' location: '..location)
     for i=1, #ListGudang, 1 do
         if ListGudang[i].lokasi == location and ListGudang[i].owner == identifier then
             owned = ListGudang[i]
+            print('owned: '..owned.kode)
             break
         end
     end
@@ -145,8 +166,10 @@ lib.callback.register('gudang:checkOwnedPin', function(source, data)
 end)
 
 lib.callback.register('gudang:checkMoney', function(source)
-    local Player = QBCore.Functions.GetPlayer(source)
-    return Player.PlayerData.money["cash"] >= Config.Gudang.price
+    local xPlayer = ESX.GetPlayerFromId(source)
+    return 
+    xPlayer.getAccount('money').money >= Config.Gudang.price
+    -- xPlayer.xPlayerData.money["money"] >= Config.Gudang.price
 end)
 
 lib.callback.register('gudang:updatePin', function(source, data)
