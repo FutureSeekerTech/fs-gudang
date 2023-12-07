@@ -14,9 +14,9 @@
 
 -- Dumping structure for table qbcore.gudang
 CREATE TABLE IF NOT EXISTS `gudang` (
-  `kode` varchar(5) DEFAULT NULL,
+  `kode` varchar(255) DEFAULT NULL,
   `lokasi` varchar(255) DEFAULT NULL,
-  `owner` varchar(12) DEFAULT NULL,
+  `owner` varchar(255) DEFAULT NULL,
   `pin` varchar(12) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
