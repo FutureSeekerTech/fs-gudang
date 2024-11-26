@@ -3,14 +3,29 @@ local ListGudang = {}
 local ListGudangStatus = false
 
 local function GetAllDataGudang()
+    for k,v in pairs(Config.Gudang.location) do
+        ListGudang[k] = {}
+    end
     local data = MySQL.query.await('SELECT * from gudang')
     for i=1, #data, 1 do
-    table.insert(ListGudang, {
-        kode                = data[i].kode,
-        lokasi              = data[i].lokasi,
-        owner               = data[i].owner,
-        pin                 = data[i].pin,
-        })
+        kode = data[i].kode
+        lokasi = data[i].lokasi
+        if ListGudang[lokasi] ~= nil then
+            ListGudang[lokasi][kode] = {
+                kode                = data[i].kode,
+                lokasi              = data[i].lokasi,
+                owner               = data[i].owner,
+                pin                 = data[i].pin,
+            }
+        else
+            ListGudang[lokasi] = {}
+            ListGudang[lokasi][kode] = {
+                kode                = data[i].kode,
+                lokasi              = data[i].lokasi,
+                owner               = data[i].owner,
+                pin                 = data[i].pin,
+            }
+        end
     end
     ListGudangStatus = true
 end
@@ -82,12 +97,22 @@ RegisterNetEvent('gudang:buyGudang', function(data)
                 ['@pin'] = pin
             }, function(rowsChanged)
                 if rowsChanged > 0 then
-                    table.insert(ListGudang, {
-                        kode = kode,
-                        lokasi = lokasi,
-                        owner = identifier,
-                        pin = pin
-                    })
+                    if ListGudang[lokasi] ~= nil then
+                        ListGudang[lokasi][kode] = {
+                            kode = kode,
+                            lokasi = lokasi,
+                            owner = identifier,
+                            pin = pin
+                        }
+                    else
+                        ListGudang[lokasi] = {}
+                        ListGudang[lokasi][kode] = {
+                            kode = kode,
+                            lokasi = lokasi,
+                            owner = identifier,
+                            pin = pin
+                        }
+                    end
                     local tempat
                     if lokasi == 'gudang_paleto' then
                         tempat = 'Gudang Paleto '..kode
@@ -122,9 +147,10 @@ lib.callback.register('gudang:checkOwned', function(source, location)
     local PlayerData = QBCore.Functions.GetPlayer(source).PlayerData
     local identifier = PlayerData.citizenid
     local owned = nil
-    for i=1, #ListGudang, 1 do
-        if ListGudang[i].lokasi == location and ListGudang[i].owner == identifier then
-            owned = ListGudang[i]
+    if ListGudang[location] == nil then return nil end
+    for k,v in pairs(ListGudang[location]) do
+        if v.owner == identifier then
+            owned = v
             break
         end
     end
@@ -135,10 +161,9 @@ lib.callback.register('gudang:checkOwnedPin', function(source, data)
     local lokasi = data.lokasi
     local kode = data.kode
     local pin = data.pin
-    for i=1, #ListGudang, 1 do
-        if ListGudang[i].lokasi == lokasi and ListGudang[i].kode == kode and ListGudang[i].pin == pin then
-            owned = ListGudang[i]
-            break
+    if ListGudang[lokasi] and ListGudang[lokasi][kode] then
+        if ListGudang[lokasi][kode].pin == pin then
+            owned = ListGudang[lokasi][kode]
         end
     end
     return owned

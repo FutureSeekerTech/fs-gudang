@@ -22,6 +22,7 @@ local function OpenGudangMenu(data)
             { type = 'input', label = 'Pin', placeholder = 'Pin', password = true },
           })
           if not input then return end
+          if input[2] == "" then return end
           OpenGudangWithPin(input[1], input[2], data.location)
           print(json.encode(input, {indent=true}))
         end,
